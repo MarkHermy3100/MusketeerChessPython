@@ -85,23 +85,23 @@ def from_betza(betza) -> PieceInfo:
                         move = new_piece.hopper[0][modality]
                     elif (rider):
                         move = new_piece.slider[0][modality]
-                    has_dir = lambda s: directions.count(s) != 0
-                    if (len(directions) == 0 or has_dir("ff") or has_dir("vv") or has_dir("rf") or has_dir("rv") or has_dir("fh") or has_dir("rh") or has_dir("hr")):
-                        move[Direction(atom[0] * FILE_NB + atom[1])] = distance
-                    if (len(directions) == 0 or has_dir("bb") or has_dir("vv") or has_dir("lb") or has_dir("lv") or has_dir("bh") or has_dir("lh") or has_dir("hr")):
-                        move[Direction(-atom[0] * FILE_NB - atom[1])] = distance
-                    if (len(directions) == 0 or has_dir("rr") or has_dir("ss") or has_dir("br") or has_dir("bs") or has_dir("bh") or has_dir("rh") or has_dir("hr")):
-                        move[-atom[1] * FILE_NB + atom[0]] = distance
-                    if (len(directions) == 0 or has_dir("ll") or has_dir("ss") or has_dir("fl") or has_dir("fs") or has_dir("fh") or has_dir("lh") or has_dir("hr")):
-                        move[atom[1] * FILE_NB - atom[0]] = distance
-                    if (len(directions) == 0 or has_dir("rr") or has_dir("ss") or has_dir("fr") or has_dir("fs") or has_dir("fh") or has_dir("rh") or has_dir("hl")):
-                        move[atom[1] * FILE_NB + atom[0]] = distance
-                    if (len(directions) == 0 or has_dir("ll") or has_dir("ss") or has_dir("bl") or has_dir("bs") or has_dir("bh") or has_dir("lh") or has_dir("hl")):
-                        move[-atom[1] * FILE_NB - atom[0]] = distance
-                    if (len(directions) == 0 or has_dir("bb") or has_dir("vv") or has_dir("rb") or has_dir("rv") or has_dir("bh") or has_dir("rh") or has_dir("hl")):
-                        move[-atom[0] * FILE_NB + atom[1]] = distance
-                    if (len(directions) == 0 or has_dir("ff") or has_dir("vv") or has_dir("lf") or has_dir("lv") or has_dir("fh") or has_dir("lh") or has_dir("hl")):
-                        move[atom[0] * FILE_NB - atom[1]] = distance
+                        has_dir = lambda s: directions.count(s) != 0
+                        if (len(directions) == 0 or has_dir("ff") or has_dir("vv") or has_dir("rf") or has_dir("rv") or has_dir("fh") or has_dir("rh") or has_dir("hr")):
+                            move[Direction(atom[0] * FILE_NB + atom[1])] = distance
+                        if (len(directions) == 0 or has_dir("bb") or has_dir("vv") or has_dir("lb") or has_dir("lv") or has_dir("bh") or has_dir("lh") or has_dir("hr")):
+                            move[Direction(-atom[0] * FILE_NB - atom[1])] = distance
+                        if (len(directions) == 0 or has_dir("rr") or has_dir("ss") or has_dir("br") or has_dir("bs") or has_dir("bh") or has_dir("rh") or has_dir("hr")):
+                            move[-atom[1] * FILE_NB + atom[0]] = distance
+                        if (len(directions) == 0 or has_dir("ll") or has_dir("ss") or has_dir("fl") or has_dir("fs") or has_dir("fh") or has_dir("lh") or has_dir("hr")):
+                            move[atom[1] * FILE_NB - atom[0]] = distance
+                        if (len(directions) == 0 or has_dir("rr") or has_dir("ss") or has_dir("fr") or has_dir("fs") or has_dir("fh") or has_dir("rh") or has_dir("hl")):
+                            move[atom[1] * FILE_NB + atom[0]] = distance
+                        if (len(directions) == 0 or has_dir("ll") or has_dir("ss") or has_dir("bl") or has_dir("bs") or has_dir("bh") or has_dir("lh") or has_dir("hl")):
+                            move[-atom[1] * FILE_NB - atom[0]] = distance
+                        if (len(directions) == 0 or has_dir("bb") or has_dir("vv") or has_dir("rb") or has_dir("rv") or has_dir("bh") or has_dir("rh") or has_dir("hl")):
+                            move[-atom[0] * FILE_NB + atom[1]] = distance
+                        if (len(directions) == 0 or has_dir("ff") or has_dir("vv") or has_dir("lf") or has_dir("lv") or has_dir("fh") or has_dir("lh") or has_dir("hl")):
+                            move[atom[0] * FILE_NB - atom[1]] = distance
             move_modalities.clear()
             prelim_directions.clear()
             hopper = False
