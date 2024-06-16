@@ -1,12 +1,16 @@
 from typing import Iterator
 from chess import *
+from chess import STARTING_FEN, Piece, Square
 from betza import *
 import chess.pgn as pgn
 import io
 
-PIECE_TYPES = [PAWN, SERGEANT, CAPTAIN, COLONEL, COMMANDER, CORPORAL, GENERAL, LIEUTENANT,
-               KNIGHT, BISHOP, ROOK, ZIGZAG, STORM, HORIZONTAL_ZIGZAG, VERTICAL_ZIGZAG,
-               HORIZONTAL_SWIPER, VERTICAL_SWIPER, KING] = range(0, 18)
+CustomPieceType = int
+
+CUSTOM_PIECE_TYPES = [SERGEANT, CAPTAIN, COLONEL, COMMANDER, CORPORAL, GENERAL, LIEUTENANT,
+                      ZIGZAG, STORM, HORIZONTAL_ZIGZAG, VERTICAL_ZIGZAG, HORIZONTAL_SWIPER, VERTICAL_SWIPER] = range(len(PIECE_TYPES), len(PIECE_TYPES) + 13)
+
+CUSTOM_SAN_REGEX = re.compile(r"^([NBKRQV])?([a-h])?([1-8])?[\-x]?([a-h][1-8])(=?[nbrqkNBRQK])?[\+#]?\Z")
 
 def print_bb(bb_int: Bitboard):
     bb = str(bin(bb_int))[2:]
@@ -38,11 +42,55 @@ class CustomPiece(Piece):
         return symbol.upper() if self.color == WHITE else symbol.lower()
     
 class CustomBoard(Board):
-    custom_pieces: list[Bitboard]
-    custom_piece_types: list[CustomPiece]
+    def __init__(self):
+        super().__init__()
+        self.custom_pieces: list[Bitboard]
+        self.custom_piece_types: list[int]
+        self.gated_positions: list[list[int]]
 
     def __str__(self) -> str:
         return super().__str__()
+    
+    def custom_piece_type_at(self, square: Square) -> Optional[CustomPieceType]:
+        mask = BB_SQUARES[square]
+        if (not self.occupied & mask):
+            return None
+        for index in range (len(self.custom_pieces)):
+            if (self.custom_pieces[index] & mask):
+                return self.custom_piece_types[index]
+        return None
+    
+    def remove_custom_piece_at(self, square: Square) -> Optional[CustomPieceType]:
+        piece_type = self.custom_piece_type_at(square)
+        if (piece_type == None):
+            return None
+        mask = BB_SQUARES[square]
+
+        for index in range (len(self.custom_pieces)):
+            if (piece_type == self.custom_piece_types[index]):
+                self.custom_pieces[index] ^= mask
+
+        self.occupied ^= mask
+        self.occupied_co[WHITE] &= ~mask
+        self.occupied_co[BLACK] &= ~mask
+
+        self.promoted &= ~mask
+
+        return piece_type
+
+    def set_custom_piece_at(self, square: Square, piece_type: Optional[CustomPieceType], color: Color, promoted: bool = False):
+        self.remove_custom_piece_at(square)
+        if (piece_type == None):
+            return
+        mask = BB_SQUARES[square]
+
+        for index in range (len(self.custom_pieces)):
+            if (piece_type == self.custom_piece_types[index]):
+                self.custom_pieces[index] |= mask
+        self.occupied ^= mask
+        self.occupied_co[color] ^= mask
+        if promoted:
+            self.promoted ^= mask
     
     def is_slide_path(self, direction: int, start: Square, target: Square, distance: int) -> bool:
         dir_x, dir_y = direction_in_2d(direction)
@@ -144,6 +192,7 @@ class CustomBoard(Board):
                     for to_sq in SQUARES:
                         if (self.is_crooked_path(dir, square, to_sq, dist) and BB_SQUARES[to_sq] & self.occupied):
                             attacks |= (BB_SQUARES[to_sq])
+
     # Custom moves from Betza notation
     def generate_custom_moves_from_betza(self, piece: CustomPiece, from_square: int) -> list[Square]:
         possible_moves = []
@@ -175,8 +224,13 @@ class CustomBoard(Board):
         # Handle pawn custom
         pawns = self.pawns & self.occupied_co[self.turn] & from_mask
 
+        pawn_type = PIECE_TYPES[PAWN]
+        for temp_type in range(PIECE_TYPES[SERGEANT], PIECE_TYPES[LIEUTENANT] + 1):
+            if (self.custom_piece_types.count(temp_type) != 0 and pawn_type == PIECE_TYPES[PAWN]):
+                pawn_type = temp_type
+
         # Special pawn captures
-        if (self.pawns != PIECE_TYPES[CORPORAL] and self.pawns != PIECE_TYPES[LIEUTENANT]):
+        if (pawn_type != PIECE_TYPES[CORPORAL] and pawn_type != PIECE_TYPES[LIEUTENANT]):
             for from_square in scan_reversed(pawns):
                 targets = BB_PAWN_ATTACKS[not self.turn][from_square] & self.occupied_co[not self.turn] & to_mask
 
@@ -184,17 +238,17 @@ class CustomBoard(Board):
                     yield Move(from_square, to_square)
 
         # Horizontal pawn moves
-        if (self.pawns == PIECE_TYPES[COLONEL] or self.pawns == PIECE_TYPES[GENERAL] or self.pawns == PIECE_TYPES[LIEUTENANT]):
+        if (pawn_type == PIECE_TYPES[COLONEL] or pawn_type == PIECE_TYPES[GENERAL] or pawn_type == PIECE_TYPES[LIEUTENANT]):
             if (self.turn == WHITE):
                 for from_square in scan_reversed(pawns):
-                    if (square_rank(from_square) == 6 or (self.pawns == PIECE_TYPES[LIEUTENANT] and square_rank(from_square) == 1)):
+                    if (square_rank(from_square) == 6 or (pawn_type == PIECE_TYPES[LIEUTENANT] and square_rank(from_square) == 1)):
                         if (BB_SQUARES[from_square + 1] & ~self.occupied and square_distance(from_square, from_square + 1) == 1):
                             yield Move(from_square, from_square + 1)
                         if (BB_SQUARES[from_square - 1] & ~self.occupied and square_distance(from_square, from_square - 1) == 1):
                             yield Move(from_square, from_square - 1)
             else:
                 for from_square in scan_reversed(pawns):
-                    if (square_rank(from_square) == 1 or (self.pawns == PIECE_TYPES[LIEUTENANT] and square_rank(from_square) == 6)):
+                    if (square_rank(from_square) == 1 or (pawn_type == PIECE_TYPES[LIEUTENANT] and square_rank(from_square) == 6)):
                         if (BB_SQUARES[from_square + 1] & ~self.occupied and square_distance(from_square, from_square + 1) == 1):
                             yield Move(from_square, from_square + 1)
                         if (BB_SQUARES[from_square - 1] & ~self.occupied and square_distance(from_square, from_square - 1) == 1):
@@ -203,32 +257,60 @@ class CustomBoard(Board):
         # Backward pawn moves
         for from_square in scan_reversed(pawns):
             if (self.turn == WHITE):
-                if ((self.pawns == PIECE_TYPES[SERGEANT] or self.pawns == PIECE_TYPES[CAPTAIN]) and square_rank(from_square) < 5):
+                if ((pawn_type == PIECE_TYPES[SERGEANT] or pawn_type == PIECE_TYPES[CAPTAIN]) and square_rank(from_square) < 4):
                     continue
-                if ((self.pawns == PIECE_TYPES[COLONEL] or self.pawns == PIECE_TYPES[GENERAL]) and square_rank(from_square) < 4):
+                if ((pawn_type == PIECE_TYPES[COLONEL] or pawn_type == PIECE_TYPES[GENERAL]) and square_rank(from_square) < 3):
                     continue
-                if (self.pawns == PIECE_TYPES[CORPORAL] and square_rank(from_square) == 4):
+                if (pawn_type == PIECE_TYPES[CORPORAL] and square_rank(from_square) == 3):
                     continue
+                yield Move(from_square, from_square - 8)
+
+            else:
+                if ((pawn_type == PIECE_TYPES[SERGEANT] or pawn_type == PIECE_TYPES[CAPTAIN]) and square_rank(from_square) > 3):
+                    continue
+                if ((pawn_type == PIECE_TYPES[COLONEL] or pawn_type == PIECE_TYPES[GENERAL]) and square_rank(from_square) > 4):
+                    continue
+                if (pawn_type == PIECE_TYPES[CORPORAL] and square_rank(from_square) == 4):
+                    continue
+                yield Move(from_square, from_square + 8)
 
         # Knight pawn moves
-        if (self.pawns == PIECE_TYPES[CAPTAIN] or self.pawns == PIECE_TYPES[COLONEL] or self.pawns == PIECE_TYPES[COMMANDER] or self.pawns == PIECE_TYPES[GENERAL]):
-            
-            for from_squares in scan_reversed(pawns):
-                to_squares = [0, 0]
-                if (square_distance(from_square, to_squares[0]) == 2):
-                    yield Move(from_square, to_squares[0])
-                if (square_distance(from_square, to_squares[1]) == 2):
-                    yield Move(from_square, to_squares[1])
+        if (pawn_type == PIECE_TYPES[CAPTAIN] or pawn_type == PIECE_TYPES[COLONEL] or pawn_type == PIECE_TYPES[COMMANDER] or pawn_type == PIECE_TYPES[GENERAL]):
+            if (self.turn == WHITE):
+                for from_square in scan_reversed(pawns):
+                    if (square_rank(from_square) > 2):
+                        break
+                    if ((pawn_type == PIECE_TYPES[CAPTAIN] or pawn_type == PIECE_TYPES[COMMANDER]) and square_rank(from_square) > 1):
+                        break
+                    if (pawn_type != PIECE_TYPES[GENERAL] and BB_SQUARES[from_square + 8] & self.occupied):
+                        break
+                    if (square_distance(from_square, from_square + 15) == 2 and BB_SQUARES[from_square + 15] & ~self.occupied):
+                        yield Move(from_square, from_square + 15)
+                    if (square_distance(from_square, from_square + 17) == 2 and BB_SQUARES[from_square + 17] & ~self.occupied):
+                        yield Move(from_square, from_square + 17)
+
+            else:
+                for from_square in scan_reversed(pawns):
+                    if (square_rank(from_square) < 5):
+                        break
+                    if ((pawn_type == PIECE_TYPES[CAPTAIN] or pawn_type == PIECE_TYPES[COMMANDER]) and square_rank(from_square) < 6):
+                        break
+                    if (pawn_type != PIECE_TYPES[GENERAL] and BB_SQUARES[from_square - 8] & self.occupied):
+                        break
+                    if (square_distance(from_square, from_square - 15) == 2 and BB_SQUARES[from_square - 15] & ~self.occupied):
+                        yield Move(from_square, from_square - 15)
+                    if (square_distance(from_square, from_square - 17) == 2 and BB_SQUARES[from_square - 17] & ~self.occupied):
+                        yield Move(from_square, from_square - 17)
 
         # Double pawn moves on 3rd rank
-        if (self.pawns == PIECE_TYPES[COLONEL] or self.pawns == PIECE_TYPES[COMMANDER]):
+        if (pawn_type == PIECE_TYPES[COLONEL] or pawn_type == PIECE_TYPES[COMMANDER]):
             double_moves = pawns
             if (self.turn == WHITE):
-                double_moves <<= 16
-                double_moves = double_moves & ~self.occupied & (BB_RANK_4 | BB_RANK_5)
+                double_moves = (double_moves << 8) & ~self.occupied
+                double_moves = double_moves << 8 & ~self.occupied & (BB_RANK_4 | BB_RANK_5)
             else:
-                double_moves >>= 16
-                double_moves = double_moves & ~self.occupied & (BB_RANK_5 | BB_RANK_4)
+                double_moves = (double_moves >> 8) & ~self.occupied
+                double_moves = double_moves >> 8 & ~self.occupied & (BB_RANK_5 | BB_RANK_4)
 
             double_moves &= to_mask
             for to_square in scan_reversed(double_moves):
@@ -236,21 +318,95 @@ class CustomBoard(Board):
                 yield Move(from_square, to_square)
 
         yield from super().generate_pseudo_legal_moves(from_mask, to_mask)
+    
+
+    def set_musketeer_board_fen(self, musketeer_fen: str) -> None:
+        rows = musketeer_fen.split("/")
+        print(rows)
+        fen = "/".join(rows[1:9])
+        super().set_board_fen(fen)
 
 
-""" board = Board()
-board.clear_board()
-board.set_piece_at(E1, Piece(QUEEN, WHITE))
-board.set_piece_at(E3, Piece(QUEEN, BLACK))
-for move in board.generate_pseudo_legal_moves(BB_E1, BB_ALL):
-    print(move)
+    def parse_san(self, san: str) -> Move:
+        # Castling.
+        try:
+            if san in ["O-O", "O-O+", "O-O#", "0-0", "0-0+", "0-0#"]:
+                return next(move for move in self.generate_castling_moves() if self.is_kingside_castling(move))
+            elif san in ["O-O-O", "O-O-O+", "O-O-O#", "0-0-0", "0-0-0+", "0-0-0#"]:
+                return next(move for move in self.generate_castling_moves() if self.is_queenside_castling(move))
+        except StopIteration:
+            raise IllegalMoveError(f"illegal san: {san!r} in {self.fen()}")
 
-print(board) """
+        # Match normal moves.
+        match = SAN_REGEX.match(san)
+        if not match:
+            # Null moves.
+            if san in ["--", "Z0", "0000", "@@@@"]:
+                return Move.null()
+            elif "," in san:
+                raise InvalidMoveError(f"unsupported multi-leg move: {san!r}")
+            else:
+                raise InvalidMoveError(f"invalid san: {san!r}")
 
-# game = pgn.read_game(io.StringIO("1. He4"))
-# print(game)
-# board = game.board()
-# for move in game.mainline_moves():
-#     board.push(move)
+        # Get target square. Mask our own pieces to exclude castling moves.
+        to_square = SQUARE_NAMES.index(match.group(4))
+        to_mask = BB_SQUARES[to_square] & ~self.occupied_co[self.turn]
 
-# print(board)
+        # Get the promotion piece type.
+        p = match.group(5)
+        promotion = PIECE_SYMBOLS.index(p[-1].lower()) if p else None
+
+        # Filter by original square.
+        from_mask = BB_ALL
+        if match.group(2):
+            from_file = FILE_NAMES.index(match.group(2))
+            from_mask &= BB_FILES[from_file]
+        if match.group(3):
+            from_rank = int(match.group(3)) - 1
+            from_mask &= BB_RANKS[from_rank]
+
+        # Filter by piece type.
+        if match.group(1):
+            piece_type = PIECE_SYMBOLS.index(match.group(1).lower())
+            from_mask &= self.pieces_mask(piece_type, self.turn)
+        elif match.group(2) and match.group(3):
+            # Allow fully specified moves, even if they are not pawn moves,
+            # including castling moves.
+            move = self.find_move(square(from_file, from_rank), to_square, promotion)
+            if move.promotion == promotion:
+                return move
+            else:
+                raise IllegalMoveError(f"missing promotion piece type: {san!r} in {self.fen()}")
+        else:
+            from_mask &= self.pawns
+
+            # Do not allow pawn captures if file is not specified.
+            if not match.group(2):
+                from_mask &= BB_FILES[square_file(to_square)]
+
+        # Match legal moves.
+        matched_move = None
+        for move in self.generate_legal_moves(from_mask, to_mask):
+            if move.promotion != promotion:
+                continue
+
+            if matched_move:
+                raise AmbiguousMoveError(f"ambiguous san: {san!r} in {self.fen()}")
+
+            matched_move = move
+
+        if not matched_move:
+            raise IllegalMoveError(f"illegal san: {san!r} in {self.fen()}")
+
+        return matched_move
+
+
+board = CustomBoard()
+# board.custom_pieces.append()
+# board.custom_piece_types = [PIECE_TYPES[SERGEANT]]
+# board.clear_board()
+# board.set_piece_at(E5, Piece(SERGEANT, WHITE))
+# board.set_piece_at(D4, Piece(SERGEANT, BLACK))
+
+board.set_musketeer_board_fen("**v***u*/4kbnr/pppppppp/8/8/8/8/PPPPPPPP/4KBNR/**U*V***")
+print(board)
