@@ -112,7 +112,7 @@ def from_betza(betza) -> PieceInfo:
                         move = new_piece.hopper[modality]
                     elif (rider):
                         move = new_piece.slider[modality]
-                    elif (crooked):
+                    if (crooked):
                         move = new_piece.crooked[modality]
                     has_dir = lambda s: directions.count(s) != 0
                     if (len(directions) == 0 or has_dir("ff") or has_dir("vv") or has_dir("rf") or has_dir("rv") or has_dir("fh") or has_dir("rh") or has_dir("hr")):
