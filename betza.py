@@ -64,18 +64,24 @@ def from_betza(betza) -> PieceInfo:
         char_next: str = betza[i + 1] if i + 1 < len(betza) else ''
         if (character == 'm' or character == 'c'):
             if (character == 'c'):
+                # Capture only but not move
                 move_modalities.append(MoveModality.MODALITY_CAPTURE)
             else:
+                # Move only but not capture
                 move_modalities.append(MoveModality.MODALITY_QUIET)
         elif (character == 'p' or character == 'g' or character == 'j'):
+            # Hopping piece
             hopper = True
             if (character == 'g' or character == 'j'):
                 distance = 1
         elif (character == 'n'):
+            # Non-hopping piece
             lame = True
         elif (character == 'z'):
+            # Zigzag piece
             crooked = True
         elif (verticals.find(character) != -1 or horizontals.find(character) != -1):
+            # Horizontal/Vertical modifiers
             if (i + 1 < len(betza)):
                 if (char_next == character
                     or (verticals.find(character) != -1 and horizontals.find(char_next) != -1)
@@ -85,6 +91,7 @@ def from_betza(betza) -> PieceInfo:
                     continue
             prelim_directions.append(character * 2)
         elif (leaper_atoms.get(character) != None or rider_atoms.get(character) != None):
+            # Move direction
             atoms: list[tuple] = leaper_atoms.get(character) if rider_atoms.get(character) == None else rider_atoms.get(character)
             if (rider_atoms.get(character) != None):
                 rider = True
