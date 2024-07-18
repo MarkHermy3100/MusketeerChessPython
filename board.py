@@ -144,14 +144,16 @@ class CustomBoard(Board):
         dir_x, dir_y = direction_in_2d(direction)
         path_x = (target & 7) - (start & 7)
         path_y = (target >> 3) - (start >> 3)
-        if (path_x % dir_x != 0 or path_y % dir_y != 0):
+        if ((dir_x == 0 and path_x != 0) or (dir_y == 0 and path_y != 0)):
             return False
-        if (path_x // dir_x != path_y // dir_y):
+        if ((dir_x != 0 and path_x % dir_x != 0) or (dir_y != 0 and path_y % dir_y != 0)):
             return False
-        if (abs(path_x // dir_x) <= distance):
+        if (dir_x != 0 and dir_y != 0 and path_x // dir_x != path_y // dir_y):
+            return False
+        if ((dir_x != 0 and abs(path_x // dir_x) > distance) or (dir_y != 0 and abs(path_y // dir_y) > distance)):
             return False
         current = start
-        for step in range (path_x // dir_x):
+        for step in range (path_x // dir_x if (dir_x != 0) else path_y // dir_y):
             current += direction
             if (current != target and BB_SQUARES[current] & self.occupied):
                 return False
@@ -504,7 +506,7 @@ class CustomBoard(Board):
     def push_uci(self, uci: str) -> Move:
         return super().push_uci(uci)
 
-board = CustomBoard()
+# board = CustomBoard()
 # board.push(Move(E2, E5))
 # board.push(Move(E7, E7))
 # board.push(Move(C2, C5))
@@ -519,22 +521,22 @@ board = CustomBoard()
 # board.set_piece_at(E5, Piece(SERGEANT, WHITE))
 # board.set_piece_at(D4, Piece(SERGEANT, BLACK))
 
-board.custom_pieces.append(BB_EMPTY)
-board.custom_pieces.append(BB_EMPTY)
-board.custom_piece_types.append(CUSTOM_PIECE_TYPES[STORM])
-board.custom_piece_types.append(CUSTOM_PIECE_TYPES[ZIGZAG])
-CUSTOM_BETZA[CUSTOM_PIECE_TYPES[ZIGZAG]] = "zF7"
-CUSTOM_BETZA[CUSTOM_PIECE_TYPES[STORM]] = "zW14"
-temp_fen = input()
-board.set_musketeer_board_fen(temp_fen)
-print(board)
-move = ""
-while (True):
-    move = input()
-    if (move == "quit"):
-        break
-    board.push_san(move)
-    print(board)
+# board.custom_pieces.append(BB_EMPTY)
+# board.custom_pieces.append(BB_EMPTY)
+# board.custom_piece_types.append(CUSTOM_PIECE_TYPES[STORM])
+# board.custom_piece_types.append(CUSTOM_PIECE_TYPES[ZIGZAG])
+# CUSTOM_BETZA[CUSTOM_PIECE_TYPES[ZIGZAG]] = "zF7"
+# CUSTOM_BETZA[CUSTOM_PIECE_TYPES[STORM]] = "zW14"
+# temp_fen = input()
+# board.set_musketeer_board_fen(temp_fen)
+# print(board)
+# move = ""
+# while (True):
+#     move = input()
+#     if (move == "quit"):
+#         break
+#     board.push_san(move)
+#     print(board)
 # board.set_musketeer_board_fen("**z***s*/rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR/SZ******")
 # board.push_san("Nc3/Z")
 # board.push_san("Nf6/Z")

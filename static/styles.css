@@ -1,0 +1,122 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background: #eee;
+}
+
+.chess-container {
+    display: grid;
+    grid-template-columns: 30px auto 30px;
+    grid-template-rows: 30px auto 30px;
+    gap: 0px 0px;
+    grid-template-areas:
+        ". files ."
+        "ranks chess-board ranks2"
+        ". files2 .";
+}
+
+.chess-board {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    width: 600px;
+    height: 600px;
+    box-shadow: 0 0 1em rgba(0, 0, 0, 0.3);
+    grid-area: chess-board;
+}
+
+.rank-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    grid-area: ranks;
+    flex-direction: column;
+    padding-top: 28px;
+    padding-bottom: 28px;
+}
+
+.rank-labels2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    grid-area: ranks2;
+    flex-direction: column;
+    padding-top: 28px;
+    padding-bottom: 28px;
+
+}
+
+.file-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    grid-area: files;
+    padding-left: 28px;
+    padding-right: 28px;
+}
+
+.file-labels2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    grid-area: files2;
+    padding-left: 28px;
+    padding-right: 28px;
+}
+
+.label {
+    width: 19px;
+    height: 19px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chess-board div {
+    position: relative;
+}
+
+.chess-board div::before {
+    content: "";
+    display: block;
+    padding-top: 100%;
+}
+
+.chess-board div.black {
+    background: #b58863;
+}
+
+.chess-board div.white {
+    background: #f0d9b5;
+}
+
+.chess-board div img {
+    position: absolute;
+    top: 10%;
+    left: 10%;
+    width: 80%;
+    height: 80%;
+}
+
+.chess-board div.highlight {
+    background: lightgreen;
+}
+
+.chess-board div.selected {
+    background: yellow;
+}
+
+.button-container {
+    /* display: flex;
+    flex-direction: column; */
+    margin-left: 700px;
+}
+
+.button-container button {
+    width: 80px;
+    margin-bottom: 30px;
+    padding: 5px;
+    font-size: 20px;
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+    <div class="chess-container">
+        <!-- <div class="file-labels">
+            {% for file in 'abcdefgh' %}
+                <div class="label">{{ file }}</div>
+            {% endfor %}
+        </div>
+        <div class="rank-labels">
+            {% for i in range(8, 0, -1) %}
+                <div class="label">{{ i }}</div>
+            {% endfor %}
+        </div> -->
+        <div class="chess-board">
+            {% for i in range(7, -1, -1) %}
+                {% for j in range(8) %}
+                    <div class="{{ 'white' if (i+j)%2==1 else 'black' }}">
+                        {% set piece = board.piece_at(i*8+j) %}
+                        {% if piece %}
+                            <img src="{{ url_for('static', filename='pieces/' + ('w' if piece.color else 'b') + piece|string + '.png') }}">
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        <!-- <div class="rank-labels2">
+            {% for i in range(8, 0, -1) %}
+                <div class="label">{{ i }}</div>
+            {% endfor %}
+        </div>
+        <div class="file-labels2">
+            {% for file in 'abcdefgh' %}
+                <div class="label">{{ file }}</div>
+            {% endfor %}
+        </div> -->
+        <div class="button-container">
+            <button id="whitePiece"><img src="../static/pieces/wP.png"></button>
+            <button id="blackPiece"><img src="../static/pieces/bp.png"></button>
+            <button id="resetButton">Reset</button>
+            <button id="undoButton">Undo</button>
+            <button id="redoButton">Redo</button>
+        </div>
+        <div class="betza-container">
+                <input type="text" id="betzaInput" name="betza">
+                <button id="betzaSubmit">Submit</button>
+        </div>
+    </div>
+</body>
+</html>
