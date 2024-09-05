@@ -115,8 +115,22 @@ body {
 }
 
 .button-container button {
-    width: 80px;
-    margin-bottom: 30px;
+    width: 100px;
+    /* margin-bottom: 30px;
     padding: 5px;
-    font-size: 20px;
+    font-size: 20px; */
+}
+
+
+
+.collapsible {
+    cursor: pointer;
+    outline: none;
+}
+  
+.collapsible-content {
+    padding: 0 100px;
+    display: none;
+    overflow: hidden;
+    background-color: #f1f1f1;
 }

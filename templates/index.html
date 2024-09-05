@@ -41,13 +41,51 @@
         <div class="button-container">
             <button id="whitePiece"><img src="../static/pieces/wP.png"></button>
             <button id="blackPiece"><img src="../static/pieces/bp.png"></button>
-            <button id="resetButton">Reset</button>
-            <button id="undoButton">Undo</button>
-            <button id="redoButton">Redo</button>
+            <button onclick="submitTempBetza()">Add</button>
+            <button onclick="changeTempBetza('', 0)">Clear</button>
+            <button type="button" class="collapsible">Ranges</button>
+            <div class="collapsible-content">
+                <button onclick="changeTempBetza('W7', 1)">Rook</button>
+                <button onclick="changeTempBetza('W', 1)">Wazir</button>
+                <button onclick="changeTempBetza('D', 1)">Dabbaba</button>
+                <button onclick="changeTempBetza('F7', 1)">Bishop</button>
+                <button onclick="changeTempBetza('F', 1)">Ferz</button>
+                <button onclick="changeTempBetza('A', 1)">Alfil</button>
+                <button onclick="changeTempBetza('N', 1)">Knight</button>
+                <button onclick="changeTempBetza('L', 1)">Long</button>
+                <button onclick="changeTempBetza('J', 1)">Jump</button>
+                <button onclick="changeTempBetza('WF', 1)">King</button>
+                <button onclick="changeTempBetza('W7F7', 1)">Queen</button>
+            </div>
+            <button type="button" class="collapsible">Modifiers</button>
+            <div class="collapsible-content">
+                <button onclick="changeTempBetza('b', 2)">backward</button>
+                <button onclick="changeTempBetza('c', 2)">capture-only</button>
+                <button onclick="changeTempBetza('f', 2)">forward</button>
+                <button onclick="changeTempBetza('l', 2)">left</button>
+                <button onclick="changeTempBetza('m', 2)">move-only</button>
+                <button onclick="changeTempBetza('r', 2)">right</button>
+                <button onclick="changeTempBetza('z', 2)">zigzag</button>
+            </div>
         </div>
+        <script>
+            let coll = document.getElementsByClassName("collapsible");
+            for (let i = 0; i < coll.length; i++) {
+                coll[i].addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    let content = this.nextElementSibling;
+                    if (content.style.display === "block") {
+                        content.style.display = "none";
+                    } else {
+                        content.style.display = "block";
+                    }
+                });
+            }
+            </script>
         <div class="betza-container">
-                <input type="text" id="betzaInput" name="betza">
-                <button id="betzaSubmit">Submit</button>
+            <input type="text" id="betzaInput" name="betza">
+            <button id="betzaSubmit">Submit</button>
+            <strong>Custom Betza: </strong><span id="customMod"></span><span id="customRange"></span>
         </div>
     </div>
 </body>
